@@ -13,6 +13,7 @@ extension Validator where T == String {
     /// RegEx for phone numbers
     /// https://en.wikipedia.org/wiki/Telephone_numbering_plan
     static let phoneNumberRegex: String = "^(\\s*)?(\\+)?([-()+]?\\d[- _():=+]?){5,15}(\\s*)?$"
+    static let serviceNameRegex: String = "^[a-z-]{1,100}$"
     static let phoneNumberCodeRegex: String = "^\\d{6}$"
     static let nameRegex: String = "^(([a-zA-Z'` -]{1,100})|([а-яА-ЯЁёІіЇїҐґЄє'` -]{1,100}))$"
     static let postalCodeRegex: String = "(^\\d{5}(-\\d{4})?$)|(^[ABCEGHJKLMNPRSTVXY]\\d[A-Z][- ]*\\d[A-Z]\\d$)"
@@ -90,6 +91,19 @@ extension Validator where T == String {
             let dateNow = Date().timeIntervalSince1970
 
             return ValidatorResults.Birthday(isValidBirthday: dateNow > birthdayDate)
+        }
+    }
+
+    ///
+    public static var serviceName: Validator<T> {
+        .init {
+            guard
+                let range = $0.range(of: serviceNameRegex, options: [.regularExpression]),
+                range.lowerBound == $0.startIndex && range.upperBound == $0.endIndex
+            else {
+                return ValidatorResults.ServiceName(isValidServiceName: false)
+            }
+            return ValidatorResults.ServiceName(isValidServiceName: true)
         }
     }
 
@@ -208,6 +222,23 @@ extension Validator where T == String {
     }
 }
 
+extension Validator where T == [String] {
+    ///
+    public static var arrayUrls: Validator<T> {
+        .init {
+            guard !$0.isEmpty else {
+                return ValidatorResults.ArrayUrls(isValid: false)
+            }
+            for item in $0 {
+                guard URL(string: item) != nil else {
+                    return ValidatorResults.ArrayUrls(isValid: false)
+                }
+            }
+            return ValidatorResults.ArrayUrls(isValid: true)
+        }
+    }
+}
+
 extension ValidatorResults {
     ///
     public struct PhoneNumber {
@@ -267,6 +298,22 @@ extension ValidatorResults {
 
     public struct UkraineCompanyEdrpou {
         public let isValidUkraineCompanyEdrpou: Bool
+    }
+    ///
+    public struct ServiceName {
+        ///
+        public let isValidServiceName: Bool
+    }
+
+    ///
+    public struct Url {
+        ///
+        public let isValidUrl: Bool
+    }
+    ///
+    public struct ArrayUrls {
+        ///
+        public let isValid: Bool
     }
 }
 
@@ -421,5 +468,47 @@ extension ValidatorResults.UkraineCompanyEdrpou: ValidatorResult {
 
     public var failureDescription: String? {
         "is not a valid Ukraine Company Edrpou"
+    }
+}
+
+extension ValidatorResults.ServiceName: ValidatorResult {
+    public var isFailure: Bool {
+        !isValidServiceName
+    }
+
+    public var successDescription: String? {
+        "is a valid service name"
+    }
+
+    public var failureDescription: String? {
+        "is not a valid service name"
+    }
+}
+
+extension ValidatorResults.Url: ValidatorResult {
+    public var isFailure: Bool {
+        !isValidUrl
+    }
+
+    public var successDescription: String? {
+        "is a valid url"
+    }
+
+    public var failureDescription: String? {
+        "is not a valid url"
+    }
+}
+
+extension ValidatorResults.ArrayUrls: ValidatorResult {
+    public var isFailure: Bool {
+        !isValid
+    }
+
+    public var successDescription: String? {
+        "has valid an URL"
+    }
+
+    public var failureDescription: String? {
+        "has not valid an URL"
     }
 }
